@@ -36,7 +36,7 @@ header ipv4_t {
 }
 
 // TODO: Define the filter and UDP headers here.
-header filter_t {
+header filterHdr_t {
     bit<8> susp;
     bit<8> proto;
 }
@@ -44,19 +44,20 @@ header filter_t {
 header udp_t {
     bit<16> srcPort;
     bit<16> dstPort;
-    bit<16> totalLen;
+    bit<16> length;
     bit<16> hdrChecksum;
 }
 
 struct metadata {
     /* empty */
+    egressSpec_t egress_spec;
 }
 
 struct headers {
     ethernet_t   ethernet;
     ipv4_t       ipv4;
     // TODO: instantiate the filter and udp headers here
-    filter_t     filter;
+    filterHdr_t     filterHdr;
     udp_t        udp;
 }
 
@@ -98,9 +99,9 @@ parser MyParser(packet_in packet,
              the UDP header
     */
     state parse_filter {
-        packet.extract(hdr.filter);
+        packet.extract(hdr.filterHdr);
 
-        transition select(hdr.filter.proto) {
+        transition select(hdr.filterHdr.proto) {
         PROTO_UDP: parse_udp;
         default: accept;
         }
@@ -133,7 +134,7 @@ control MyIngress(inout headers hdr,
              susp field in the filter header
     */      
     action set_susp() {
-        hdr.filter.susp = 1;
+        hdr.filterHdr.susp = 1;
     }
 
     /* TODO: define a table that matches on
@@ -143,8 +144,8 @@ control MyIngress(inout headers hdr,
     */
     table filter_match {
         key = {
-            hdr.ipv4.srcAddr;
-            hdr.udp.srcPort;
+            hdr.ipv4.srcAddr: exact;
+            hdr.udp.srcPort: exact;
         }
         actions = {
             set_susp;
@@ -187,12 +188,8 @@ control MyIngress(inout headers hdr,
                      the filter table
             */
 
-            if (hdr.filter.isValid()) {
-
-                if (hdr.udp.isValid()) {
-                    
-                    filter_match.apply();
-                }
+            if (hdr.filter.isValid() && hdr.udp.isValid()) {
+                filter_match.apply();
             }
 
             ipv4_exact.apply();
@@ -246,8 +243,12 @@ control MyDeparser(packet_out packet, in headers hdr) {
                  to emit the filter and udp
                  headers as well
         */
-        packet.emit(hdr.filter);
-        packet.emit(hdr.udp);
+        if (hdr.filter.isValid()) {
+            packet.emit(hdr.filter);
+        }
+        if (hdr.udp.isValid()) {
+            packet.emit(hdr.udp);
+        }
     }
 }
 
