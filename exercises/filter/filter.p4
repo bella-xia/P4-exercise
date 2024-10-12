@@ -87,7 +87,7 @@ parser MyParser(packet_in packet,
                  filter header or accept depending
                  on hdr.ipv4.protocol
         */ 
-        transition select(hdr.ethernet.protocol) {
+        transition select(hdr.ipv4.protocol) {
         PROTO_FILTER: parse_filter;
         default: accept;
        }
