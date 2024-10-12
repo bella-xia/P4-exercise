@@ -188,7 +188,7 @@ control MyIngress(inout headers hdr,
                      the filter table
             */
 
-            if (hdr.filter.isValid() && hdr.udp.isValid()) {
+            if (hdr.filterHdr.isValid() && hdr.udp.isValid()) {
                 filter_match.apply();
             }
 
@@ -243,8 +243,8 @@ control MyDeparser(packet_out packet, in headers hdr) {
                  to emit the filter and udp
                  headers as well
         */
-        if (hdr.filter.isValid()) {
-            packet.emit(hdr.filter);
+        if (hdr.filterHdr.isValid()) {
+            packet.emit(hdr.filterHdr);
         }
         if (hdr.udp.isValid()) {
             packet.emit(hdr.udp);
