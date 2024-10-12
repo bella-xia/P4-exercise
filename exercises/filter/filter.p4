@@ -143,8 +143,8 @@ control MyIngress(inout headers hdr,
     */
     table filter_match {
         key = {
-            hdr.ipv4.srcAddr: exact;
-            hdr.udp.srcPort: exact;
+            hdr.ipv4.srcAddr;
+            hdr.udp.srcPort;
         }
         actions = {
             set_susp;
@@ -187,8 +187,12 @@ control MyIngress(inout headers hdr,
                      the filter table
             */
 
-            if (hdr.filter.isValid() && hdr.udp.isValid()) {
-                filter_match.apply();
+            if (hdr.filter.isValid()) {
+
+                if (hdr.udp.isValid()) {
+                    
+                    filter_match.apply();
+                }
             }
 
             ipv4_exact.apply();
