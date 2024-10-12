@@ -35,6 +35,7 @@ header ipv4_t {
 
 struct metadata {
     /* empty */
+    egressSpec_t egress_spec
 }
 
 struct headers {
@@ -56,15 +57,20 @@ parser MyParser(packet_in packet,
          */
 
     state start {
-        
+        transition parse_ethernet;
     }
 
     state parse_ethernet {
-       
+       packet.extract(hdr.ethernet);
+       transition select(hdr.ethernet.etherType) {
+        TYPE_IPV4: parse_ipv4;
+        default: accept;
+       }
     }
 
     state parse_ipv4 {
-        
+        packet.extract(hdr.ipv4);
+        transition accept;
     }
 }
 
@@ -91,7 +97,12 @@ control MyIngress(inout headers hdr,
 
     action ipv4_forward(macAddr_t dstAddr, egressSpec_t port) {
         /* TODO: fill out code in action body */
-	
+        bit<48> tmp;
+
+        tmp = hdr.ethernet.dstAddr;
+        hdr.ethernet.dstAddr = dstAddr;
+        hdr.ethernet.srcAddr = tmp;
+        standard_metadata.egress_spec = port;
     }
 
     table ipv4_exact {
@@ -111,6 +122,7 @@ control MyIngress(inout headers hdr,
         /* TODO: fix ingress control logic
          *  - ipv4_exact should be applied only when IPv4 header is valid
          */
+         ipv4_exact.apply();
 
 	}
 }
@@ -157,6 +169,8 @@ control MyComputeChecksum(inout headers hdr, inout metadata meta) {
 control MyDeparser(packet_out packet, in headers hdr) {
     apply {
         /* TODO: add deparser logic */
+        packet.emit(hdr.ethernet);
+        packet.emit(hdr.ipv4);
     }
 }
 
