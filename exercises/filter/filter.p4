@@ -243,12 +243,8 @@ control MyDeparser(packet_out packet, in headers hdr) {
                  to emit the filter and udp
                  headers as well
         */
-        if (hdr.filterHdr.isValid()) {
-            packet.emit(hdr.filterHdr);
-        }
-        if (hdr.udp.isValid()) {
-            packet.emit(hdr.udp);
-        }
+        packet.emit(hdr.filterHdr);
+        packet.emit(hdr.udp);
     }
 }
 
