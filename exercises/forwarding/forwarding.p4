@@ -35,7 +35,7 @@ header ipv4_t {
 
 struct metadata {
     /* empty */
-    egressSpec_t egress_spec
+    egressSpec_t egress_spec;
 }
 
 struct headers {
